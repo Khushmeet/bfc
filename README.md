@@ -5,4 +5,9 @@ It uses a compiler to fold similar instructions together and define a new
 representation. This representation is then fed to a brainfuck machine
 written in Go.
 
-Running `mandelbrot.bf` took `17s` 
+Running `mandelbrot.bf` took `17s`
+
+### Running bfc 
+`go build`
+
+`./bfc mandelbrot.bf`
