@@ -1,94 +1,67 @@
 package main
 
-import "io"
+type Compiler struct {
+	code     string
+	code_len int
+	position int
 
-type BFMachine struct {
-	code   string
-	ip     int
-	memory [30000]int
-	dp     int
-	input  io.Reader
-	output io.Writer
-	buffer []byte
+	instructions []*Instruction
 }
 
-func NewBFMachine(code string, in io.Reader, out io.Writer) *BFMachine {
-	return &BFMachine{
-		code: code,
-		input: in,
-		output: out,
-		buffer: make([]byte, 1),
+func NewCompiler(code string) *Compiler {
+	return &Compiler{
+		code:         code,
+		code_len:     len(code),
+		instructions: []*Instruction{},
 	}
 }
 
-func (bfm *BFMachine) readChar() {
-	n, err := bfm.input.Read(bfm.buffer)
-
-	if err!=nil {
-		panic(err)
+func (c *Compiler) EmitWithArgs(insType byte, count int) int {
+	ins := &Instruction{
+		Type: insType,
+		Arg:  count,
 	}
 
-	if n!=1 {
-		panic("Wrong number of bytes read!")
-	}
-
-	bfm.memory[bfm.dp] = int(bfm.buffer[0])
+	c.instructions = append(c.instructions, ins)
+	return len(c.instructions) - 1
 }
 
-func (bfm *BFMachine) putChar() {
-	bfm.buffer[0] = byte(bfm.memory[bfm.dp])
+func (c *Compiler) CompileFoldableInstruction(char byte, insType byte) {
+	count := 1
 
-	n, err := bfm.output.Write(bfm.buffer)
-
-	if err!=nil {
-		panic(err)
+	for c.position < c.code_len-1 && c.code[c.position+1] == char {
+		count++
+		c.position++
 	}
 
-	if n!=1 {
-		panic("Wrong number of bytes written!")
-	}
+	c.EmitWithArgs(insType, count)
 }
 
-func (bfm *BFMachine) Execute() {
-	for bfm.ip < len(bfm.code) {
-		instruction := bfm.code[bfm.ip]
+func (c *Compiler) Compile() []*Instruction {
+	for c.position < c.code_len {
+		curr := c.code[c.position]
 
-		switch instruction {
-		case '+': bfm.memory[bfm.dp]++
-		case '-': bfm.memory[bfm.dp]--
-		case '>': bfm.dp++
-		case '<': bfm.dp--
-		case '.': bfm.putChar()
-		case ',': bfm.readChar()
+		switch curr {
+		case '+':
+			c.CompileFoldableInstruction('+', Plus)
+		case '-':
+			c.CompileFoldableInstruction('-', Minus)
+		case '<':
+			c.CompileFoldableInstruction('<', Left)
+		case '>':
+			c.CompileFoldableInstruction('>', Right)
+		case '.':
+			c.CompileFoldableInstruction('.', PutChar)
+		case ',':
+			c.CompileFoldableInstruction(',', ReadChar)
 		case '[':
-			if bfm.memory[bfm.dp] == 0 {
-				depth := 1
-				for depth != 0 {
-					bfm.ip++
-					switch bfm.code[bfm.ip] {
-					case '[':
-						depth++
-					case ']':
-						depth--
-					}
-				}
-			}
+			c.CompileFoldableInstruction('[', JmpIfZero)
 		case ']':
-			if bfm.memory[bfm.dp] != 0 {
-				depth := 1
-				for depth != 0 {
-					bfm.ip--
-					switch bfm.code[bfm.ip] {
-					case '[':
-						depth--
-					case ']':
-						depth++
-					}
-				}
-			}
+			c.CompileFoldableInstruction(']', JmpIfNZero)
 		}
-		bfm.ip++
+
+		c.position++
 	}
+
+	return c.instructions
 }
-
-

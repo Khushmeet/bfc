@@ -1,9 +1,9 @@
 package main
 
 import (
-	"os"
-	"io/ioutil"
 	"fmt"
+	"io/ioutil"
+	"os"
 )
 
 func main() {
