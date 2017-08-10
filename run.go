@@ -14,6 +14,9 @@ func main() {
 		os.Exit(-1)
 	}
 
-	bfm := NewBFMachine(string(code), os.Stdin, os.Stdout)
+	compiler := NewCompiler(string(code))
+	instructions := compiler.Compile()
+
+	bfm := NewBFMachine(instructions, os.Stdin, os.Stdout)
 	bfm.Execute()
 }

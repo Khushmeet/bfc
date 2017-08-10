@@ -38,6 +38,8 @@ func (c *Compiler) CompileFoldableInstruction(char byte, insType byte) {
 }
 
 func (c *Compiler) Compile() []*Instruction {
+	stack := []int{}
+
 	for c.position < c.code_len {
 		curr := c.code[c.position]
 
@@ -55,9 +57,13 @@ func (c *Compiler) Compile() []*Instruction {
 		case ',':
 			c.CompileFoldableInstruction(',', ReadChar)
 		case '[':
-			c.CompileFoldableInstruction('[', JmpIfZero)
+			pos := c.EmitWithArgs(JmpIfZero, 0)
+			stack = append(stack, pos)
 		case ']':
-			c.CompileFoldableInstruction(']', JmpIfNZero)
+			open_brac := stack[len(stack)-1]
+			stack = stack[:len(stack)-1]
+			close_brac := c.EmitWithArgs(JmpIfNZero, open_brac)
+			c.instructions[open_brac].Arg = close_brac
 		}
 
 		c.position++

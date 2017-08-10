@@ -55,29 +55,29 @@ func (bfm *BFMachine) Execute() {
 	for bfm.ip < len(bfm.code) {
 		inst := bfm.code[bfm.ip]
 
-		switch inst {
-		case '+':
+		switch inst.Type {
+		case Plus:
 			bfm.memory[bfm.dp] += inst.Arg
-		case '-':
+		case Minus:
 			bfm.memory[bfm.dp] -= inst.Arg
-		case '>':
+		case Right:
 			bfm.dp += inst.Arg
-		case '<':
+		case Left:
 			bfm.dp -= inst.Arg
-		case '.':
+		case PutChar:
 			for i := 0; i < inst.Arg; i++ {
 				bfm.putChar()
 			}
-		case ',':
+		case ReadChar:
 			for i := 0; i < inst.Arg; i++ {
 				bfm.readChar()
 			}
-		case '[':
+		case JmpIfZero:
 			if bfm.memory[bfm.dp] == 0 {
 				bfm.ip = inst.Arg
 				continue
 			}
-		case ']':
+		case JmpIfNZero:
 			if bfm.memory[bfm.dp] != 0 {
 				bfm.ip = inst.Arg
 				continue
